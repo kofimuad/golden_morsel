@@ -1,0 +1,12 @@
+node_modules/
+.env
+.env.local
+*.log
+logs/
+*.pid
+*.seed
+dist/
+.DS_Store
+.vscode/
+.idea/
+package-lock.json
