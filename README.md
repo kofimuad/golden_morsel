@@ -1,4 +1,4 @@
-# 🎯 GoldenMorse Backend - READ ME FIRST
+# 🎯 Golden Morsel Backend - READ ME FIRST
 
 **Complete Backend Delivery - Start Here**
 
