@@ -1,8 +1,8 @@
-# GoldenMorsel Backend - Complete Setup Guide v2.0
+# GoldenMorse Backend - Complete Setup Guide v2.0
 
 ## 🎯 PROJECT OVERVIEW
 
-This is a WhatsApp-integrated e-commerce backend for GoldenMorsel - a premium Ghanaian treats business.
+This is a WhatsApp-integrated e-commerce backend for GoldenMorse - a premium Ghanaian treats business.
 
 ### Key Features
 
@@ -160,7 +160,7 @@ NODE_ENV=development
 # Database
 MONGODB_URI=mongodb://localhost:27017/goldenmorse
 # OR for MongoDB Atlas:
-# MONGODB_URI=mongodb+srv://user:password@cluster.mongodb.net/goldenmorse
+# MONGODB_URI=mongodb+srv://<username>:<password>@<cluster>.mongodb.net/goldenmorse?retryWrites=true&w=majority
 
 # JWT
 JWT_SECRET=your_super_secret_key_min_32_characters
