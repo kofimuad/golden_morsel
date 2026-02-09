@@ -1,52 +1,49 @@
 import mongoose from 'mongoose';
-import bcrypt from 'bcryptjs';
 
 const userSchema = new mongoose.Schema(
   {
     phone: {
       type: String,
       unique: true,
-      sparse: true,
-      match: [/^\+?[0-9]{10,15}$/, 'Valid phone number required']
+      required: true
     },
     email: {
       type: String,
-      lowercase: true,
-      match: [/^[^\s@]+@[^\s@]+\.[^\s@]+$/, 'Valid email required']
+      lowercase: true
     },
     password: {
       type: String,
       select: false
     },
-    name: {
-      type: String,
-      trim: true
-    },
-    
-    // Addresses
+    name: String,
     addresses: [
       {
         label: String,
         street: String,
         city: String,
         region: String,
-        default: Boolean,
-        _id: false
+        postalCode: String,
+        country: String,
+        default: Boolean
       }
     ],
-    
-    // Preferences
-    emailNotifications: {
-      type: Boolean,
-      default: false
+    preferences: {
+      emailNotifications: {
+        type: Boolean,
+        default: true
+      },
+      smsNotifications: {
+        type: Boolean,
+        default: true
+      },
+      defaultPaymentMethod: String
     },
-    smsNotifications: {
-      type: Boolean,
-      default: false
-    },
-    
-    // Tracking
-    lastOrderDate: Date,
+    orders: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Order'
+      }
+    ],
     totalOrders: {
       type: Number,
       default: 0
@@ -55,43 +52,22 @@ const userSchema = new mongoose.Schema(
       type: Number,
       default: 0
     },
-    
-    active: {
-      type: Boolean,
-      default: true
-    }
-  },
-  { timestamps: true }
+    lastOrderDate: Date,
+    createdAt: {
+      type: Date,
+      default: Date.now
+    },
+    lastLogin: Date
+  }
 );
 
-// Hash password before saving
-userSchema.pre('save', async function(next) {
-  if (!this.isModified('password')) return next();
-  
-  try {
-    const salt = await bcrypt.genSalt(10);
-    this.password = await bcrypt.hash(this.password, salt);
-    next();
-  } catch (error) {
-    next(error);
-  }
-});
-
-// Method to compare passwords
-userSchema.methods.matchPassword = async function(enteredPassword) {
-  return await bcrypt.compare(enteredPassword, this.password);
-};
-
-// Remove password from JSON
+// Don't include password in JSON by default
 userSchema.methods.toJSON = function() {
   const obj = this.toObject();
   delete obj.password;
   return obj;
 };
 
-// Indexes
-userSchema.index({ phone: 1 });
-userSchema.index({ email: 1 });
-
 const User = mongoose.model('User', userSchema);
+
 export default User;

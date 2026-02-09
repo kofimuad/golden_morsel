@@ -1,51 +1,304 @@
-import Admin from '../models/Admin.js';
-import { asyncHandler, AppError } from '../middleware/errorHandler.js';
+import bcryptjs from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import Admin from '../models/Admin.js';
+import User from '../models/User.js';
 
-// ADMIN LOGIN
-export const adminLogin = asyncHandler(async (req, res) => {
-  const { email, password } = req.body;
+// ========== ADMIN CONTROLLERS ==========
 
-  if (!email || !password) {
-    throw new AppError('Email and password required', 400);
-  }
+// Admin Signup
+export const adminSignup = async (req, res) => {
+  try {
+    const { email, password, name, phone } = req.body;
 
-  const admin = await Admin.findOne({ email }).select('+password');
-
-  if (!admin || !(await admin.matchPassword(password))) {
-    throw new AppError('Invalid credentials', 401);
-  }
-
-  if (!admin.active) {
-    throw new AppError('Admin account is inactive', 403);
-  }
-
-  // Update last login
-  admin.lastLogin = new Date();
-  await admin.save();
-
-  const token = jwt.sign(
-    { id: admin._id },
-    process.env.JWT_ADMIN_SECRET,
-    { expiresIn: '7d' }
-  );
-
-  res.status(200).json({
-    success: true,
-    message: 'Login successful',
-    data: {
-      admin: admin.toJSON(),
-      token
+    // Validate input
+    if (!email || !password || !name) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email, password, and name are required'
+      });
     }
-  });
-});
 
-// GET current admin
-export const getCurrentAdmin = asyncHandler(async (req, res) => {
-  const admin = await Admin.findById(req.adminId);
+    // Check if admin already exists
+    const existingAdmin = await Admin.findOne({ email });
+    if (existingAdmin) {
+      return res.status(400).json({
+        success: false,
+        message: 'Admin with this email already exists'
+      });
+    }
 
-  res.status(200).json({
-    success: true,
-    data: admin
-  });
-});
+    // Hash password
+    const salt = await bcryptjs.genSalt(10);
+    const hashedPassword = await bcryptjs.hash(password, salt);
+
+    // Create admin
+    const admin = await Admin.create({
+      email,
+      password: hashedPassword,
+      name,
+      phone,
+      role: 'admin',
+      permissions: [
+        'view_orders',
+        'confirm_payment',
+        'manage_inventory',
+        'manage_products',
+        'manage_admins',
+        'view_analytics'
+      ],
+      active: true
+    });
+
+    // Generate token
+    const token = jwt.sign(
+      { id: admin._id, email: admin.email, role: admin.role },
+      process.env.JWT_ADMIN_SECRET || 'admin_secret_key',
+      { expiresIn: '7d' }
+    );
+
+    res.status(201).json({
+      success: true,
+      message: 'Admin account created successfully',
+      data: {
+        admin: {
+          _id: admin._id,
+          email: admin.email,
+          name: admin.name,
+          role: admin.role
+        },
+        token
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
+// Admin Login
+export const adminLogin = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    // Validate input
+    if (!email || !password) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email and password are required'
+      });
+    }
+
+    // Find admin
+    const admin = await Admin.findOne({ email }).select('+password');
+    if (!admin) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid email or password'
+      });
+    }
+
+    // Check password
+    const isPasswordValid = await bcryptjs.compare(password, admin.password);
+    if (!isPasswordValid) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid email or password'
+      });
+    }
+
+    // Generate token
+    const token = jwt.sign(
+      { id: admin._id, email: admin.email, role: admin.role },
+      process.env.JWT_ADMIN_SECRET || 'admin_secret_key',
+      { expiresIn: '7d' }
+    );
+
+    res.status(200).json({
+      success: true,
+      message: 'Login successful',
+      data: {
+        admin: {
+          _id: admin._id,
+          email: admin.email,
+          name: admin.name,
+          role: admin.role
+        },
+        token
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
+// Get Current Admin
+export const getCurrentAdmin = async (req, res) => {
+  try {
+    const admin = await Admin.findById(req.admin.id);
+    
+    res.status(200).json({
+      success: true,
+      data: admin
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
+// ========== USER CONTROLLERS ==========
+
+// User Signup
+export const userSignup = async (req, res) => {
+  try {
+    const { phone, email, password, name } = req.body;
+
+    // Validate input
+    if (!phone) {
+      return res.status(400).json({
+        success: false,
+        message: 'Phone number is required'
+      });
+    }
+
+    // Check if user already exists
+    const existingUser = await User.findOne({ phone });
+    if (existingUser) {
+      return res.status(400).json({
+        success: false,
+        message: 'User with this phone already exists'
+      });
+    }
+
+    // Hash password if provided
+    let hashedPassword = null;
+    if (password) {
+      const salt = await bcryptjs.genSalt(10);
+      hashedPassword = await bcryptjs.hash(password, salt);
+    }
+
+    // Create user
+    const user = await User.create({
+      phone,
+      email,
+      password: hashedPassword,
+      name,
+      addresses: [],
+      preferences: {
+        emailNotifications: true,
+        smsNotifications: true
+      }
+    });
+
+    // Generate token (optional - for immediate login)
+    const token = jwt.sign(
+      { id: user._id, phone: user.phone },
+      process.env.JWT_SECRET || 'user_secret_key',
+      { expiresIn: '30d' }
+    );
+
+    res.status(201).json({
+      success: true,
+      message: 'Account created successfully',
+      data: {
+        user: {
+          _id: user._id,
+          phone: user.phone,
+          email: user.email,
+          name: user.name
+        },
+        token
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
+// User Login
+export const userLogin = async (req, res) => {
+  try {
+    const { phone, password } = req.body;
+
+    // Validate input
+    if (!phone) {
+      return res.status(400).json({
+        success: false,
+        message: 'Phone number is required'
+      });
+    }
+
+    // Find user
+    const user = await User.findOne({ phone }).select('+password');
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    // If user has password, check it
+    if (user.password && password) {
+      const isPasswordValid = await bcryptjs.compare(password, user.password);
+      if (!isPasswordValid) {
+        return res.status(401).json({
+          success: false,
+          message: 'Invalid password'
+        });
+      }
+    }
+
+    // Generate token
+    const token = jwt.sign(
+      { id: user._id, phone: user.phone },
+      process.env.JWT_SECRET || 'user_secret_key',
+      { expiresIn: '30d' }
+    );
+
+    res.status(200).json({
+      success: true,
+      message: 'Login successful',
+      data: {
+        user: {
+          _id: user._id,
+          phone: user.phone,
+          email: user.email,
+          name: user.name
+        },
+        token
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
+// Get Current User
+export const getCurrentUser = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    
+    res.status(200).json({
+      success: true,
+      data: user
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
