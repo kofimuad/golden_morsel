@@ -1,12 +1,16 @@
-// src/server.js
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import mongoose from 'mongoose';
 import helmet from 'helmet';
 import morgan from 'morgan';
+import rateLimit from 'express-rate-limit';  // ADDED
 
 dotenv.config();
+
+// VALIDATE ENVIRONMENT VARIABLES FIRST
+import { validateEnvironment } from './config/envValidator.js';  // ADDED
+validateEnvironment();  // ADDED - Run validation
 
 // Import routes
 import productRoutes from './routes/productRoutes.js';
@@ -23,19 +27,57 @@ import { errorHandler } from './middleware/errorHandler.js';
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Middleware
+// ========== RATE LIMITING CONFIGURATION ==========
+
+// General rate limiter for all routes
+const generalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,  // 15 minutes
+  max: 100,                   // 100 requests per 15 minutes
+  message: 'Too many requests from this IP, please try again later.',
+  standardHeaders: true,       // Return rate limit info in `RateLimit-*` headers
+  legacyHeaders: false,        // Disable `X-RateLimit-*` headers
+  skip: (req) => {
+    // Skip rate limiting for health check
+    return req.path === '/api/health';
+  }
+});
+
+// Strict rate limiter for authentication endpoints
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,  // 15 minutes
+  max: 5,                     // 5 login attempts per 15 minutes
+  message: 'Too many login attempts, please try again later.',
+  skipSuccessfulRequests: true  // Don't count successful logins against limit
+});
+
+// Strict rate limiter for order creation
+const orderLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,  // 1 hour
+  max: 20,                    // 20 orders per hour per IP
+  message: 'Too many orders, please try again later.'
+});
+
+// ========== MIDDLEWARE ==========
+
 app.use(helmet());
 app.use(morgan('combined'));
+
+// CORS configuration
 app.use(cors({
   origin: process.env.FRONTEND_URL || 'http://localhost:3000',
   credentials: true,
   optionsSuccessStatus: 200
 }));
 
+// Body parsing
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
-// Database Connection
+// Apply general rate limiter to all routes
+app.use(generalLimiter);
+
+// ========== DATABASE CONNECTION ==========
+
 const connectDB = async () => {
   try {
     const mongoURI = process.env.MONGODB_URI || 'mongodb://localhost:27017/goldenmorse';
@@ -51,16 +93,21 @@ const connectDB = async () => {
 
 connectDB();
 
-// Routes
+// ========== ROUTES ==========
+
+// Public routes
 app.use('/api/products', productRoutes);
-app.use('/api/orders', orderRoutes);
 app.use('/api/users', userRoutes);
-app.use('/api/inventory', inventoryRoutes);
-app.use('/api/auth', authRoutes);
-app.use('/api/admin', adminRoutes);
 app.use('/api/whatsapp', whatsappRoutes);
 
-// Health Check
+// Protected routes with rate limiting
+app.use('/api/auth', authLimiter, authRoutes);           // Strict auth rate limit
+app.use('/api/orders', orderLimiter, orderRoutes);       // Strict order rate limit
+app.use('/api/inventory', inventoryRoutes);
+app.use('/api/admin', adminRoutes);
+
+// ========== HEALTH CHECK ENDPOINT ==========
+
 app.get('/api/health', (req, res) => {
   res.status(200).json({
     status: 'ok',
@@ -70,7 +117,8 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// 404 Handler
+// ========== 404 HANDLER ==========
+
 app.use((req, res) => {
   res.status(404).json({
     success: false,
@@ -80,16 +128,19 @@ app.use((req, res) => {
   });
 });
 
-// Error Handler
+// ========== ERROR HANDLER ==========
+
 app.use(errorHandler);
 
-// Start Server
+// ========== START SERVER ==========
+
 const startServer = async () => {
   app.listen(PORT, () => {
     console.log('\n🚀 GoldenMorse Backend Server');
     console.log('================================');
     console.log(`🔗 Server running on http://localhost:${PORT}`);
     console.log(`📁 Environment: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`🛡️  Rate limiting enabled`);
     console.log('================================\n');
   });
 };

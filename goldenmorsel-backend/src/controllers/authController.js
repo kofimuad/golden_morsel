@@ -168,6 +168,14 @@ export const userSignup = async (req, res) => {
       });
     }
 
+    // Validate password length
+    if (password && password.length < 6) {
+      return res.status(400).json({
+        success: false,
+        message: 'Password must be at least 6 characters'
+      });
+    }
+
     // Check if user already exists
     const existingUser = await User.findOne({ phone });
     if (existingUser) {
@@ -177,18 +185,12 @@ export const userSignup = async (req, res) => {
       });
     }
 
-    // Hash password if provided
-    let hashedPassword = null;
-    if (password) {
-      const salt = await bcryptjs.genSalt(10);
-      hashedPassword = await bcryptjs.hash(password, salt);
-    }
-
     // Create user
+    // Password will be hashed by pre-save hook in User model
     const user = await User.create({
       phone,
       email,
-      password: hashedPassword,
+      password: password || null, // Allow signup without password initially
       name,
       addresses: [],
       preferences: {
@@ -197,7 +199,7 @@ export const userSignup = async (req, res) => {
       }
     });
 
-    // Generate token (optional - for immediate login)
+    // Generate token
     const token = jwt.sign(
       { id: user._id, phone: user.phone },
       process.env.JWT_SECRET || 'user_secret_key',
@@ -208,12 +210,7 @@ export const userSignup = async (req, res) => {
       success: true,
       message: 'Account created successfully',
       data: {
-        user: {
-          _id: user._id,
-          phone: user.phone,
-          email: user.email,
-          name: user.name
-        },
+        user: user.toJSON(), // Password automatically excluded
         token
       }
     });
@@ -225,7 +222,7 @@ export const userSignup = async (req, res) => {
   }
 };
 
-// User Login
+// User Login - FIXED WITH PASSWORD VALIDATION
 export const userLogin = async (req, res) => {
   try {
     const { phone, password } = req.body;
@@ -238,25 +235,41 @@ export const userLogin = async (req, res) => {
       });
     }
 
-    // Find user
-    const user = await User.findOne({ phone }).select('+password');
-    if (!user) {
-      return res.status(401).json({
+    if (!password) {
+      return res.status(400).json({
         success: false,
-        message: 'User not found'
+        message: 'Password is required'
       });
     }
 
-    // If user has password, check it
-    if (user.password && password) {
-      const isPasswordValid = await bcryptjs.compare(password, user.password);
-      if (!isPasswordValid) {
-        return res.status(401).json({
-          success: false,
-          message: 'Invalid password'
-        });
-      }
+    // Find user and include password field
+    const user = await User.findOne({ phone }).select('+password');
+    
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid phone or password'
+      });
     }
+
+    // Check if user has password set
+    if (!user.password) {
+      return res.status(401).json({
+        success: false,
+        message: 'Please set a password first'
+      });
+    }
+
+    // ========== CRITICAL FIX: VALIDATE PASSWORD ==========
+    // This ALWAYS validates the password against the hash
+    const isPasswordValid = await user.matchPassword(password);
+    if (!isPasswordValid) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid phone or password'
+      });
+    }
+    // ========== END PASSWORD VALIDATION ==========
 
     // Generate token
     const token = jwt.sign(
@@ -269,12 +282,7 @@ export const userLogin = async (req, res) => {
       success: true,
       message: 'Login successful',
       data: {
-        user: {
-          _id: user._id,
-          phone: user.phone,
-          email: user.email,
-          name: user.name
-        },
+        user: user.toJSON(), // Password automatically excluded by toJSON()
         token
       }
     });

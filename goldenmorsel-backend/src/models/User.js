@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import bcryptjs from 'bcryptjs';
 
 const userSchema = new mongoose.Schema(
   {
@@ -13,7 +14,7 @@ const userSchema = new mongoose.Schema(
     },
     password: {
       type: String,
-      select: false
+      select: false // Don't return in queries by default
     },
     name: String,
     addresses: [
@@ -61,7 +62,30 @@ const userSchema = new mongoose.Schema(
   }
 );
 
-// Don't include password in JSON by default
+// ========== PASSWORD HASHING MIDDLEWARE ==========
+// Hash password before saving if it's new or modified
+userSchema.pre('save', async function(next) {
+  // Only hash if password is new or modified
+  if (!this.isModified('password')) return next();
+
+  try {
+    // Generate salt and hash password
+    const salt = await bcryptjs.genSalt(10);
+    this.password = await bcryptjs.hash(this.password, salt);
+    next();
+  } catch (error) {
+    next(error);
+  }
+});
+
+// ========== PASSWORD COMPARISON METHOD ==========
+// Compare entered password with hashed password
+userSchema.methods.matchPassword = async function(enteredPassword) {
+  return await bcryptjs.compare(enteredPassword, this.password);
+};
+
+// ========== JSON SERIALIZATION ==========
+// Don't include password in JSON output
 userSchema.methods.toJSON = function() {
   const obj = this.toObject();
   delete obj.password;
