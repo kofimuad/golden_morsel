@@ -13,10 +13,11 @@ import Layout from './components/layout/Layout';
 import HomePage from './pages/HomePage';
 import CartPage from './pages/CartPage';
 import CheckoutPage from './pages/CheckoutPage';
-// import ShopPage from './pages/ShopPage';
-// import ProductDetailPage from './pages/ProductDetailPage';
-// import CollectionPage from './pages/CollectionPage';
-// import OrderTrackingPage from './pages/OrderTrackingPage';
+import ShopPage from './pages/ShopPage';
+import ProductDetailPage from './pages/ProductDetailPage';
+import CollectionPage from './pages/CollectionPage';
+import OrderTrackingPage from './pages/OrderTrackingPage';
+import NotFoundPage from './pages/NotFoundPage';
 
 function App() {
   return (
@@ -25,14 +26,14 @@ function App() {
         <Layout>
           <Routes>
             <Route path="/" element={<HomePage />} />
+            <Route path="/shop" element={<ShopPage />} />
+            <Route path="/product/:id" element={<ProductDetailPage />} />
+            <Route path="/collection/:category" element={<CollectionPage />} />
             <Route path="/cart" element={<CartPage />} />
             <Route path="/checkout" element={<CheckoutPage />} />
-            {/* <Route path="/shop" element={<ShopPage />} /> */}
-            {/* <Route path="/product/:id" element={<ProductDetailPage />} /> */}
-            {/* <Route path="/collections" element={<CollectionPage />} /> */}
-            {/* <Route path="/collections/:category" element={<CollectionPage />} /> */}
-            {/* <Route path="/track/:trackingNumber" element={<OrderTrackingPage />} /> */}
-            <Route path="*" element={<div className="min-h-screen flex items-center justify-center"><h1 className="text-4xl font-display font-bold">404 - Page Not Found</h1></div>} />
+            <Route path="/track-order" element={<OrderTrackingPage />} />
+            <Route path="/404" element={<NotFoundPage />} />
+            <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </Layout>
         

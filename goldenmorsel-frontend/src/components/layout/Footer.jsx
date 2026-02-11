@@ -6,99 +6,116 @@ import { motion } from 'framer-motion';
 const Footer = () => {
   const currentYear = new Date().getFullYear();
 
-  const footerLinks = {
-    explore: [
-      { name: 'Our Process', path: '/process' },
-      { name: 'Stockists', path: '/stockists' },
-    ],
-    social: [
-      { name: 'Instagram', path: 'https://instagram.com' },
-      { name: 'Twitter', path: 'https://twitter.com' },
-      { name: 'TikTok', path: 'https://tiktok.com' },
-    ],
-  };
+  const footerSections = [
+    {
+      title: 'Shop',
+      links: [
+        { label: 'All Products', path: '/shop' },
+        { label: 'Collections', path: '/collection/all' },
+        { label: 'New Arrivals', path: '/shop' },
+      ],
+    },
+    {
+      title: 'Support',
+      links: [
+        { label: 'Contact Us', path: '#contact' },
+        { label: 'Track Order', path: '/track-order' },
+        { label: 'FAQ', path: '#faq' },
+      ],
+    },
+    {
+      title: 'About',
+      links: [
+        { label: 'Our Story', path: '/#about' },
+        { label: 'Blog', path: '#blog' },
+        { label: 'Careers', path: '#careers' },
+      ],
+    },
+  ];
+
+  const socialLinks = [
+    { icon: MessageCircle, label: 'WhatsApp', href: 'https://wa.me/233123456789' },
+    { icon: Instagram, label: 'Instagram', href: 'https://instagram.com' },
+    { icon: Facebook, label: 'Facebook', href: 'https://facebook.com' },
+    { icon: Twitter, label: 'Twitter', href: 'https://twitter.com' },
+  ];
 
   return (
-    <footer className="bg-dark-900 text-cream-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <footer className="bg-dark-900 text-cream-100">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        {/* Main Footer Content */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
-          {/* Brand Section */}
-          <div className="col-span-1 md:col-span-2">
-            <Link to="/" className="inline-block mb-4">
-              <h2 className="text-2xl sm:text-3xl font-display font-bold text-primary-400">
-                GoldenMorsel
-              </h2>
-            </Link>
-            <p className="text-cream-200 text-sm mb-6 max-w-md font-body">
-              "Born from a kitchen in Osu, GoldenMorsel is a tribute to the grandmothers who made every snack a story and every morsel a celebration."
+          {/* Brand */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+          >
+            <h3 className="text-xl font-display font-bold text-cream-50 mb-4">
+              GoldenMorsel
+            </h3>
+            <p className="text-cream-200 text-sm mb-4">
+              Celebrating Ghanaian flavours with artisanal craftsmanship.
             </p>
-            <div className="mb-4">
-              <p className="text-xs text-cream-300 uppercase tracking-wider mb-2">
-                Crafting Nostalgia Since 2024
-              </p>
-            </div>
-          </div>
-
-          {/* Explore */}
-          <div>
-            <h3 className="text-primary-400 font-semibold mb-4 uppercase tracking-wider text-sm">
-              Explore
-            </h3>
-            <ul className="space-y-2">
-              {footerLinks.explore.map((link) => (
-                <li key={link.path}>
-                  <Link
-                    to={link.path}
-                    className="text-cream-200 hover:text-primary-400 transition-colors text-sm"
-                  >
-                    {link.name}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Social */}
-          <div>
-            <h3 className="text-primary-400 font-semibold mb-4 uppercase tracking-wider text-sm">
-              Social
-            </h3>
-            <ul className="space-y-2">
-              {footerLinks.social.map((link) => (
-                <li key={link.path}>
+            <div className="flex space-x-4">
+              {socialLinks.map((social) => {
+                const Icon = social.icon;
+                return (
                   <a
-                    href={link.path}
+                    key={social.label}
+                    href={social.href}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-cream-200 hover:text-primary-400 transition-colors text-sm"
+                    className="p-2 bg-dark-800 rounded-lg hover:bg-primary-500 transition-colors"
                   >
-                    {link.name}
+                    <Icon className="w-5 h-5" />
                   </a>
-                </li>
-              ))}
-            </ul>
-          </div>
+                );
+              })}
+            </div>
+          </motion.div>
+
+          {/* Links Sections */}
+          {footerSections.map((section, index) => (
+            <motion.div
+              key={section.title}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: index * 0.1 }}
+            >
+              <h4 className="font-display font-bold text-cream-50 mb-4">
+                {section.title}
+              </h4>
+              <ul className="space-y-2">
+                {section.links.map((link) => (
+                  <li key={link.path}>
+                    <Link
+                      to={link.path}
+                      className="text-cream-200 hover:text-primary-400 transition-colors text-sm"
+                    >
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </motion.div>
+          ))}
         </div>
 
-        {/* Bottom Section */}
-        <div className="border-t border-dark-700 pt-8">
-          <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
-            <div className="text-sm text-cream-300">
-              <p>Secured by <span className="text-primary-400 font-semibold">GoldenMorsel Concierge</span></p>
-              <p className="mt-1">© {currentYear} GoldenMorsel Ghana. All rights reserved.</p>
-            </div>
+        {/* Divider */}
+        <div className="border-t border-dark-800 my-8" />
 
-            <motion.a
-              href="https://wa.me/233123456789"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center space-x-2 bg-primary-500 text-white px-5 py-2.5 rounded-full hover:bg-primary-600 transition-colors"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <MessageCircle className="w-5 h-5" />
-              <span className="font-medium">Message on WhatsApp</span>
-            </motion.a>
+        {/* Bottom Footer */}
+        <div className="flex flex-col md:flex-row items-center justify-between text-cream-300 text-sm">
+          <p>&copy; {currentYear} GoldenMorsel. All rights reserved.</p>
+          <div className="flex space-x-6 mt-4 md:mt-0">
+            <Link to="#privacy" className="hover:text-primary-400 transition-colors">
+              Privacy Policy
+            </Link>
+            <Link to="#terms" className="hover:text-primary-400 transition-colors">
+              Terms of Service
+            </Link>
           </div>
         </div>
       </div>

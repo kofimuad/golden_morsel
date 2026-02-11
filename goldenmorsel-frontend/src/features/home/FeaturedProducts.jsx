@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { productService } from '../../../services/productService';
-import ProductCard from '../../products/ProductCard';
-import { Spinner } from '../../../components/common';
+import productService from '../../services/productService';
+import ProductCard from '../../components/navigation/ProductCard';
+import Spinner from '../../components/common/Spinner';
 
 const FeaturedProducts = () => {
   const [products, setProducts] = useState([]);
@@ -11,7 +11,7 @@ const FeaturedProducts = () => {
   useEffect(() => {
     const loadProducts = async () => {
       try {
-        // For now, just get the first 4 products
+        // Get first 4 products as featured
         const response = await productService.getAllProducts({ limit: 4 });
         setProducts(response.data || []);
       } catch (error) {
@@ -59,19 +59,25 @@ const FeaturedProducts = () => {
           </motion.p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {products.map((product, index) => (
-            <motion.div
-              key={product._id}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: index * 0.1 }}
-            >
-              <ProductCard product={product} />
-            </motion.div>
-          ))}
-        </div>
+        {products.length === 0 ? (
+          <div className="text-center py-12">
+            <p className="text-gray-600 font-body">No products available yet</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {products.map((product, index) => (
+              <motion.div
+                key={product._id}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: index * 0.1 }}
+              >
+                <ProductCard product={product} />
+              </motion.div>
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );

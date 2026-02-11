@@ -1,5 +1,5 @@
 export const API_CONFIG = {
-  BASE_URL: process.env.REACT_APP_API_URL || 'http://localhost:5000/api',
+  BASE_URL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api',
   TIMEOUT: 30000,
   HEADERS: {
     'Content-Type': 'application/json',
@@ -37,7 +37,7 @@ export const ENDPOINTS = {
 };
 
 export const WHATSAPP_CONFIG = {
-  BUSINESS_NUMBER: process.env.REACT_APP_WHATSAPP_NUMBER || '+233123456789',
+  BUSINESS_NUMBER: import.meta.env.VITE_WHATSAPP_NUMBER || '+233123456789',
   MESSAGE_TEMPLATES: {
     ORDER: (orderData) => 
       `Hello! I'd like to place an order:\n\n${orderData.items.map(item => 
