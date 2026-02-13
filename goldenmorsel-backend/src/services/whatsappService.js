@@ -5,12 +5,21 @@ import axios from 'axios';
  */
 export const sendWhatsAppMessage = async (recipientPhone, message) => {
   try {
+    // Clean phone number - remove +, spaces, dashes
+    let cleanPhone = recipientPhone.toString().trim();
+    cleanPhone = cleanPhone.replace(/[+\s\-\(\)]/g, '');
+    
+    // Ensure it's a valid format (should be country code + number)
+    if (cleanPhone.length < 10) {
+      throw new Error(`Invalid phone number format: ${recipientPhone}`);
+    }
+
     const response = await axios.post(
       `https://graph.instagram.com/v18.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`,
       {
         messaging_product: 'whatsapp',
         recipient_type: 'individual',
-        to: recipientPhone.replace(/\D/g, ''), // Remove non-digits
+        to: cleanPhone,
         type: 'text',
         text: { body: message }
       },
@@ -94,4 +103,38 @@ Thank you! 🙏
   } catch (error) {
     console.error(`❌ Failed to send payment confirmation:`, error.message);
   }
+};
+
+/**
+ * Generate checkout message for WhatsApp
+ */
+export const generateCheckoutMessage = (checkoutData) => {
+  const { customer, items, subtotal, deliveryFee, total } = checkoutData;
+  
+  let itemsList = items
+    .map(item => `• ${item.name} x${item.quantity} = GH₵ ${(item.price * item.quantity).toFixed(2)}`)
+    .join('\n');
+
+  return `
+🎉 *Order Summary*
+
+*Customer Details:*
+Name: ${customer.fullName}
+Email: ${customer.email}
+Phone: ${customer.phone}
+Address: ${customer.address}, ${customer.city}
+${customer.notes ? `Notes: ${customer.notes}` : ''}
+
+*Items Ordered:*
+${itemsList}
+
+*Order Total:*
+Subtotal: GH₵ ${subtotal.toFixed(2)}
+Delivery Fee: GH₵ ${deliveryFee.toFixed(2)}
+
+*TOTAL: GH₵ ${total.toFixed(2)}*
+
+Please confirm this order and proceed with payment instructions.
+Thank you for choosing GoldenMorsel! ❤️
+  `.trim();
 };

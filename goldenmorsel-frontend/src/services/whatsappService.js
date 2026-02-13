@@ -1,7 +1,7 @@
 import api from './api';
 import { ENDPOINTS, WHATSAPP_CONFIG } from '../config/api.config';
 
-export const whatsappService = {
+const whatsappService = {
   // Send checkout via WhatsApp
   sendCheckout: async (orderData) => {
     try {
@@ -36,4 +36,5 @@ export const whatsappService = {
   },
 };
 
+export { whatsappService };
 export default whatsappService;

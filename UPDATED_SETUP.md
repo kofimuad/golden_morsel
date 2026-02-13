@@ -158,7 +158,7 @@ PORT=5000
 NODE_ENV=development
 
 # Database
-MONGODB_URI=mongodb://localhost:27017/goldenmorse
+MONGODB_URI=mongodb://localhost:27017/goldenmorsel
 # OR for MongoDB Atlas:
 # MONGODB_URI=mongodb+srv://<username>:<password>@<cluster>.mongodb.net/goldenmorse?retryWrites=true&w=majority
 

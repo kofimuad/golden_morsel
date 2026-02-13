@@ -1,6 +1,6 @@
 import Order from '../models/Order.js';
 import { asyncHandler, AppError } from '../middleware/errorHandler.js';
-import { sendWhatsAppMessage, generateOrderMessage } from '../services/whatsappService.js';
+import { sendWhatsAppMessage, generateOrderMessage, generateCheckoutMessage } from '../services/whatsappService.js';
 
 // ========== WEBHOOK VERIFICATION (GET REQUEST) ==========
 // Meta webhook verification - SEPARATE FROM MESSAGE PROCESSING
@@ -119,4 +119,53 @@ export const sendOrderMessage = asyncHandler(async (req, res) => {
     success: true,
     message: 'Message sent to customer successfully'
   });
+});
+
+// ========== SEND CHECKOUT MESSAGE TO CUSTOMER ==========
+// Frontend sends checkout order data to WhatsApp
+export const sendCheckout = asyncHandler(async (req, res) => {
+  const { customer, items, subtotal, deliveryFee, total } = req.body;
+
+  // Validate required fields
+  if (!customer || !customer.phone || !items || items.length === 0) {
+    throw new AppError('Missing required checkout data', 400);
+  }
+
+  try {
+    // Generate checkout message
+    const message = generateCheckoutMessage({
+      customer,
+      items,
+      subtotal,
+      deliveryFee,
+      total
+    });
+
+    // Clean and format phone number - ensure it has country code
+    let phone = customer.phone.toString().trim();
+    // Remove common formatting characters
+    phone = phone.replace(/[\s\-\(\)]/g, '');
+    // If phone doesn't start with +, add +233 (Ghana code)
+    if (!phone.startsWith('+')) {
+      // Remove leading 0 if present
+      if (phone.startsWith('0')) {
+        phone = phone.substring(1);
+      }
+      phone = '+233' + phone;
+    }
+
+    console.log(`📱 Sending WhatsApp checkout to: ${phone}`);
+    
+    // Send to customer
+    await sendWhatsAppMessage(phone, message);
+
+    res.status(200).json({
+      success: true,
+      message: 'Checkout details sent to customer successfully',
+      phone: phone
+    });
+  } catch (error) {
+    console.error('❌ Checkout error:', error.message);
+    throw new AppError(`Failed to send checkout message: ${error.message}`, 500);
+  }
 });

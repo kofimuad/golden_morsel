@@ -34,7 +34,7 @@ const Footer = () => {
   ];
 
   const socialLinks = [
-    { icon: MessageCircle, label: 'WhatsApp', href: 'https://wa.me/233123456789' },
+    { icon: MessageCircle, label: 'WhatsApp', href: 'https://wa.me/233551283848' },
     { icon: Instagram, label: 'Instagram', href: 'https://instagram.com' },
     { icon: Facebook, label: 'Facebook', href: 'https://facebook.com' },
     { icon: Twitter, label: 'Twitter', href: 'https://twitter.com' },

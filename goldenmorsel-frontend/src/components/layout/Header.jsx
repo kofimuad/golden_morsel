@@ -1,23 +1,33 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Menu, X, ShoppingBag, User, Search } from 'lucide-react';
+import { Menu, X, ShoppingBag, User, Search, LogOut } from 'lucide-react';
 import { useStore } from '../../context/storeContext';
+import { useAuth } from '../../context/authContext';
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const { state, dispatch } = useStore();
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const { state } = useStore();
+  const { isAuthenticated, user, logout } = useAuth();
+  const navigate = useNavigate();
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
-  const toggleCart = () => dispatch({ type: 'TOGGLE_CART' });
+  const toggleUserMenu = () => setIsUserMenuOpen(!isUserMenuOpen);
 
   const menuItems = [
     { label: 'Home', path: '/' },
     { label: 'Shop', path: '/shop' },
     { label: 'Collections', path: '/collection/all' },
     { label: 'About', path: '#about' },
-    { label: 'Contact', path: '#contact' },
+    { label: 'Contact', path: '/contact' },
   ];
+
+  const handleLogout = () => {
+    logout();
+    navigate('/');
+    setIsUserMenuOpen(false);
+  };
 
   return (
     <header className="bg-white shadow-sm sticky top-0 z-50 border-b border-gray-200">
@@ -48,14 +58,120 @@ const Header = () => {
 
           {/* Right Side Icons */}
           <div className="flex items-center space-x-4">
-            <button className="p-2 hover:bg-cream-50 rounded-lg transition-colors">
+            {/* Search Button */}
+            <Link
+              to="/search"
+              className="p-2 hover:bg-cream-50 rounded-lg transition-colors"
+            >
               <Search className="w-5 h-5 text-dark-700" />
-            </button>
-            <button className="p-2 hover:bg-cream-50 rounded-lg transition-colors">
-              <User className="w-5 h-5 text-dark-700" />
-            </button>
-            <button
-              onClick={toggleCart}
+            </Link>
+
+            {/* User/Profile Button */}
+            <div className="relative">
+              <button
+                onClick={toggleUserMenu}
+                className="p-2 hover:bg-cream-50 rounded-lg transition-colors"
+              >
+                <User className="w-5 h-5 text-dark-700" />
+              </button>
+
+              {/* User Dropdown Menu */}
+              <AnimatePresence>
+                {isUserMenuOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    className="absolute right-0 mt-1 w-48 bg-white shadow-lg rounded-lg border border-gray-200 z-50"
+                  >
+                    {isAuthenticated ? (
+                      <>
+                        <div className="px-4 py-2 border-b border-gray-200">
+                          <p className="text-sm font-medium text-dark-900">{user?.name || 'User'}</p>
+                          <p className="text-xs text-gray-600">{user?.email}</p>
+                        </div>
+                        <Link
+                          to="/profile"
+                          className="block px-4 py-2 text-sm text-dark-700 hover:bg-cream-50 transition-colors"
+                          onClick={() => setIsUserMenuOpen(false)}
+                        >
+                          My Profile
+                        </Link>
+                        <Link
+                          to="/orders"
+                          className="block px-4 py-2 text-sm text-dark-700 hover:bg-cream-50 transition-colors"
+                          onClick={() => setIsUserMenuOpen(false)}
+                        >
+                          Order History
+                        </Link>
+                        <Link
+                          to="/wishlist"
+                          className="block px-4 py-2 text-sm text-dark-700 hover:bg-cream-50 transition-colors"
+                          onClick={() => setIsUserMenuOpen(false)}
+                        >
+                          Wishlist
+                        </Link>
+                        <Link
+                          to="/addresses"
+                          className="block px-4 py-2 text-sm text-dark-700 hover:bg-cream-50 transition-colors"
+                          onClick={() => setIsUserMenuOpen(false)}
+                        >
+                          Addresses
+                        </Link>
+                        {user?.role === 'admin' && (
+                          <>
+                            <div className="border-t border-gray-200"></div>
+                            <Link
+                              to="/admin/dashboard"
+                              className="block px-4 py-2 text-sm text-primary-600 hover:bg-cream-50 transition-colors font-medium"
+                              onClick={() => setIsUserMenuOpen(false)}
+                            >
+                              Admin Panel
+                            </Link>
+                          </>
+                        )}
+                        <div className="border-t border-gray-200"></div>
+                        <button
+                          onClick={handleLogout}
+                          className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-cream-50 transition-colors flex items-center space-x-2"
+                        >
+                          <LogOut className="w-4 h-4" />
+                          <span>Logout</span>
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <Link
+                          to="/login"
+                          className="block px-4 py-2 text-sm text-dark-700 hover:bg-cream-50 transition-colors"
+                          onClick={() => setIsUserMenuOpen(false)}
+                        >
+                          Login
+                        </Link>
+                        <Link
+                          to="/register"
+                          className="block px-4 py-2 text-sm text-dark-700 hover:bg-cream-50 transition-colors border-b border-gray-200"
+                          onClick={() => setIsUserMenuOpen(false)}
+                        >
+                          Register
+                        </Link>
+                        <Link
+                          to="/admin/login"
+                          className="block px-4 py-2 text-sm text-primary-600 hover:bg-cream-50 transition-colors font-medium"
+                          onClick={() => setIsUserMenuOpen(false)}
+                        >
+                          Admin Login
+                        </Link>
+                      </>
+                    )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
+            {/* Shopping Cart Button */}
+            <Link
+              to="/cart"
               className="relative p-2 hover:bg-cream-50 rounded-lg transition-colors"
             >
               <ShoppingBag className="w-5 h-5 text-dark-700" />
@@ -64,7 +180,7 @@ const Header = () => {
                   {state.cart.length}
                 </span>
               )}
-            </button>
+            </Link>
 
             {/* Mobile Menu Button */}
             <button onClick={toggleMenu} className="md:hidden p-2">
@@ -97,6 +213,24 @@ const Header = () => {
                     {item.label}
                   </Link>
                 ))}
+                {!isAuthenticated && (
+                  <>
+                    <Link
+                      to="/login"
+                      className="text-dark-700 hover:text-primary-500 transition-colors py-2 px-4 rounded hover:bg-cream-50"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      Login
+                    </Link>
+                    <Link
+                      to="/admin/login"
+                      className="text-primary-600 font-medium transition-colors py-2 px-4 rounded hover:bg-cream-50"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      Admin Login
+                    </Link>
+                  </>
+                )}
               </div>
             </motion.div>
           )}

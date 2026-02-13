@@ -2,7 +2,8 @@ import express from 'express';
 import {
   verifyWhatsAppWebhook,    // NEW: Separate verification function
   whatsappWebhook,
-  sendOrderMessage
+  sendOrderMessage,
+  sendCheckout
 } from '../controllers/whatsappController.js';
 import { adminAuthMiddleware } from '../middleware/adminMiddleware.js';
 
@@ -22,5 +23,9 @@ router.post('/webhook', whatsappWebhook);
 // Admin sends message to customer
 // Requires admin authentication
 router.post('/:orderId/send', adminAuthMiddleware, sendOrderMessage);
+
+// ========== SEND CHECKOUT MESSAGE ==========
+// Frontend sends checkout order data to WhatsApp
+router.post('/checkout', sendCheckout);
 
 export default router;

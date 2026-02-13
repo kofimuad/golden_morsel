@@ -18,7 +18,7 @@ const Layout = ({ children }) => {
       </main>
 
       {/* Cart Drawer */}
-      {state.showCart && <CartDrawer />}
+      <CartDrawer />
 
       {/* Footer */}
       <Footer />
