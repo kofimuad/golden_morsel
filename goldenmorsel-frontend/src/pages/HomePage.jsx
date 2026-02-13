@@ -55,7 +55,7 @@ const HomePage = () => {
           <div className="grid md:grid-cols-2 gap-8">
             <motion.div
               whileHover={{ scale: 1.02 }}
-              className="bg-gradient-to-br from-primary-50 to-cream-100 rounded-2xl p-8 cursor-pointer"
+              className="bg-linear-to-br from-primary-50 to-cream-100 rounded-2xl p-8 cursor-pointer"
               onClick={() => navigate('/collections/memoria')}
             >
               <div className="mb-4">
@@ -74,7 +74,7 @@ const HomePage = () => {
 
             <motion.div
               whileHover={{ scale: 1.02 }}
-              className="bg-gradient-to-br from-cream-100 to-primary-50 rounded-2xl p-8 cursor-pointer"
+              className="bg-linear-to-br from-cream-100 to-primary-50 rounded-2xl p-8 cursor-pointer"
               onClick={() => navigate('/collections/memoria')}
             >
               <div className="mb-4">
@@ -100,7 +100,7 @@ const HomePage = () => {
       {/* Pop-ups Section */}
       <section className="py-16 bg-cream-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="bg-gradient-to-r from-primary-500 to-primary-600 rounded-3xl p-8 md:p-12 text-center text-white relative overflow-hidden">
+          <div className="bg-linear-to-r from-primary-500 to-primary-600 rounded-3xl p-8 md:p-12 text-center text-white relative overflow-hidden">
             <div className="absolute inset-0 opacity-10">
               <div className="absolute inset-0" style={{
                 backgroundImage: 'radial-gradient(circle at 20% 50%, white 1px, transparent 1px)',

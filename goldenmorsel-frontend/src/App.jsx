@@ -60,6 +60,7 @@ import AdminDashboard from './pages/AdminDashboard';
 
 // Admin Order Management
 import OrderManagementPage from './pages/OrderManagementPage';
+import OrderDetailPage from './pages/OrderDetailPage';
 
 // Admin Product Management
 import ProductManagement from './pages/ProductManagement';
@@ -67,6 +68,7 @@ import AddEditProductPage from './pages/AddEditProductPage';
 
 // Admin Customer Management
 import CustomerManagementPage from './pages/CustomerManagementPage';
+import CustomerDetailPage from './pages/CustomerDetailPage';
 
 // Admin Inventory Management
 import InventoryManagementPage from './pages/InventoryManagementPage';
@@ -216,7 +218,7 @@ const App = () => {
             element={
               <PrivateRoute requiredRole="admin">
                 <AdminLayout>
-                  {/* Order Detail Page - TODO: Create */}
+                  <OrderDetailPage />
                 </AdminLayout>
               </PrivateRoute>
             }
@@ -282,7 +284,7 @@ const App = () => {
             element={
               <PrivateRoute requiredRole="admin">
                 <AdminLayout>
-                  {/* Customer Detail Page - TODO: Create */}
+                  <CustomerDetailPage />
                 </AdminLayout>
               </PrivateRoute>
             }

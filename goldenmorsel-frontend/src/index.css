@@ -11,7 +11,6 @@
   --color-cream-700: #BDAC93;
   --color-cream-800: #A18F73;
   --color-cream-900: #857253;
-
   --color-primary-50: #FEF5F0;
   --color-primary-100: #FDE8DE;
   --color-primary-200: #FBD0BD;
@@ -22,7 +21,6 @@
   --color-primary-700: #8B6432;
   --color-primary-800: #70572C;
   --color-primary-900: #554A26;
-
   --color-dark-50: #F9F7F6;
   --color-dark-100: #F3EFED;
   --color-dark-200: #E7DFDB;
@@ -33,7 +31,6 @@
   --color-dark-700: #3A312C;
   --color-dark-800: #2A2321;
   --color-dark-900: #1A151A;
-
   --font-display: 'Playfair Display', serif;
   --font-body: 'Inter', sans-serif;
 }

@@ -88,8 +88,8 @@ const Footer = () => {
                 {section.title}
               </h4>
               <ul className="space-y-2">
-                {section.links.map((link) => (
-                  <li key={link.path}>
+                {section.links.map((link, linkIndex) => (
+                  <li key={`${section.title}-${linkIndex}`}>
                     <Link
                       to={link.path}
                       className="text-cream-200 hover:text-primary-400 transition-colors text-sm"
@@ -110,10 +110,10 @@ const Footer = () => {
         <div className="flex flex-col md:flex-row items-center justify-between text-cream-300 text-sm">
           <p>&copy; {currentYear} GoldenMorsel. All rights reserved.</p>
           <div className="flex space-x-6 mt-4 md:mt-0">
-            <Link to="#privacy" className="hover:text-primary-400 transition-colors">
+            <Link to="/privacy" className="hover:text-primary-400 transition-colors">
               Privacy Policy
             </Link>
-            <Link to="#terms" className="hover:text-primary-400 transition-colors">
+            <Link to="/terms" className="hover:text-primary-400 transition-colors">
               Terms of Service
             </Link>
           </div>
