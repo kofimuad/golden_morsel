@@ -15,7 +15,7 @@ export const sendWhatsAppMessage = async (recipientPhone, message) => {
     }
 
     const response = await axios.post(
-      `https://graph.instagram.com/v18.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`,
+      `https://graph.instagram.com/v21.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`,
       {
         messaging_product: 'whatsapp',
         recipient_type: 'individual',
