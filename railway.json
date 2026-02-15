@@ -1,0 +1,7 @@
+{
+  "services": {
+    "goldenmorsel-backend": {
+      "builder": "nixpacks"
+    }
+  }
+}
