@@ -4,12 +4,14 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Menu, X, ShoppingBag, User, Search, LogOut } from 'lucide-react';
 import { useStore } from '../../context/storeContext';
 import { useAuth } from '../../context/authContext';
+import { useCartDrawer } from '../../context/cartDrawerContext';
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const { state } = useStore();
   const { isAuthenticated, user, logout } = useAuth();
+  const { setIsOpen: setCartDrawerOpen } = useCartDrawer();
   const navigate = useNavigate();
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
@@ -27,6 +29,11 @@ const Header = () => {
     logout();
     navigate('/');
     setIsUserMenuOpen(false);
+  };
+
+  const handleCartClick = (e) => {
+    e.preventDefault();
+    setCartDrawerOpen(true);
   };
 
   return (
@@ -87,7 +94,7 @@ const Header = () => {
                     {isAuthenticated ? (
                       <>
                         <div className="px-4 py-2 border-b border-gray-200">
-                          <p className="text-sm font-medium text-dark-900">{user?.name || 'User'}</p>
+                          <p className="text-sm font-medium text-dark-900">{user?.fullName || user?.name || 'User'}</p>
                           <p className="text-xs text-gray-600">{user?.email}</p>
                         </div>
                         <Link
@@ -170,17 +177,17 @@ const Header = () => {
             </div>
 
             {/* Shopping Cart Button */}
-            <Link
-              to="/cart"
+            <button
+              onClick={handleCartClick}
               className="relative p-2 hover:bg-cream-50 rounded-lg transition-colors"
             >
               <ShoppingBag className="w-5 h-5 text-dark-700" />
-              {state.cart.length > 0 && (
+              {state?.cart?.length > 0 && (
                 <span className="absolute top-0 right-0 bg-primary-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
                   {state.cart.length}
                 </span>
               )}
-            </Link>
+            </button>
 
             {/* Mobile Menu Button */}
             <button onClick={toggleMenu} className="md:hidden p-2">

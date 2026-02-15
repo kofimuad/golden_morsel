@@ -37,7 +37,7 @@ export const ENDPOINTS = {
 };
 
 export const WHATSAPP_CONFIG = {
-  BUSINESS_NUMBER: import.meta.env.VITE_WHATSAPP_NUMBER || '+233123456789',
+  BUSINESS_NUMBER: import.meta.env.VITE_WHATSAPP_NUMBER || '+233551283848',
   MESSAGE_TEMPLATES: {
     ORDER: (orderData) => 
       `Hello! I'd like to place an order:\n\n${orderData.items.map(item => 

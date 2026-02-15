@@ -157,7 +157,7 @@ const HomePage = () => {
               size="lg"
               icon={<MessageCircle className="w-5 h-5" />}
               className="bg-primary-500 hover:bg-primary-600"
-              onClick={() => window.open('https://wa.me/233123456789', '_blank')}
+              onClick={() => window.open('https://wa.me/233551283848', '_blank')}
             >
               Message on WhatsApp
             </Button>

@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, MessageCircle, Lock } from 'lucide-react';
 import { useCart } from '../hooks/useCart';
 import Button from '../components/common/Button';
-import { whatsappService } from '../services/whatsappService';
+import  whatsappService  from '../services/whatsappService';
 import { toast } from 'react-toastify';
 
 const CheckoutPage = () => {
@@ -32,51 +32,52 @@ const CheckoutPage = () => {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    // Validate form
-    if (!formData.fullName || !formData.email || !formData.phone || !formData.address) {
-      toast.error('Please fill in all required fields');
-      return;
-    }
+  // Validate form
+  if (!formData.fullName || !formData.email || !formData.phone || !formData.address) {
+    toast.error('Please fill in all required fields');
+    return;
+  }
 
-    setLoading(true);
+  setLoading(true);
 
-    try {
-      const orderData = {
-        customer: formData,
-        items: cart.map(item => ({
-          name: item.name,
-          quantity: item.quantity,
-          price: item.price,
-          variant: item.selectedVariant?.name || '',
-        })),
-        subtotal: cartTotals.subtotal,
-        deliveryFee: deliveryFee,
-        total: total,
-      };
+  try {
+    const orderData = {
+      customer: formData,
+      items: cart.map(item => ({
+        name: item.name,
+        quantity: item.quantity,
+        price: item.price,
+        variant: item.selectedVariant?.name || '',
+      })),
+      subtotal: cartTotals.subtotal,
+      deliveryFee: deliveryFee,
+      total: total,
+    };
 
-      // Send to WhatsApp
-      await whatsappService.sendCheckout(orderData);
-      
-      // Open WhatsApp
-      whatsappService.openWhatsAppCheckout(orderData);
+    // Send to backend
+    await whatsappService.sendCheckout(orderData);
+    
+    // Open WhatsApp with message - FIXED
+    const message = `Order Summary:\n\nItems: ${orderData.items.length}\nTotal: GH₵ ${orderData.total.toFixed(2)}\n\nPlease confirm this order.`;
+    whatsappService.openWhatsAppCheckout(orderData.customer.phone, message);
 
-      toast.success('Redirecting to WhatsApp...');
-      
-      // Clear cart after short delay
-      setTimeout(() => {
-        clearCart();
-        navigate('/');
-      }, 2000);
+    toast.success('Redirecting to WhatsApp...');
+    
+    // Clear cart after short delay
+    setTimeout(() => {
+      clearCart();
+      navigate('/');
+    }, 2000);
 
-    } catch (error) {
-      toast.error('Something went wrong. Please try again.');
-      console.error('Checkout error:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  } catch (error) {
+    toast.error('Something went wrong. Please try again.');
+    console.error('Checkout error:', error);
+  } finally {
+    setLoading(false);
+  }
+};
 
   if (cart.length === 0) {
     navigate('/cart');

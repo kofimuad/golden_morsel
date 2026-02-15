@@ -77,6 +77,7 @@ const authReducer = (state, action) => {
         user: action.payload,
         isAuthenticated: !!action.payload,
         isAdmin: action.payload?.role === 'admin',
+        loading: false,
       };
 
     case AUTH_ACTIONS.SET_ERROR:
@@ -119,13 +120,17 @@ export const AuthProvider = ({ children }) => {
         console.error('Error parsing user from localStorage:', error);
         localStorage.removeItem('authToken');
         localStorage.removeItem('user');
+        dispatch({
+          type: AUTH_ACTIONS.SET_LOADING,
+          payload: false,
+        });
       }
+    } else {
+      dispatch({
+        type: AUTH_ACTIONS.SET_LOADING,
+        payload: false,
+      });
     }
-
-    dispatch({
-      type: AUTH_ACTIONS.SET_LOADING,
-      payload: false,
-    });
   }, []);
 
   // Save token and user to localStorage on login
@@ -198,4 +203,4 @@ export const useAuth = () => {
   return context;
 };
 
-export default AuthContext;
+export default AuthProvider;

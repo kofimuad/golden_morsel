@@ -2,25 +2,36 @@ import React from 'react';
 import Header from './Header';
 import Footer from './Footer';
 import CartDrawer from '../cart/CartDrawer';
-import { useStore } from '../../context/storeContext';
+import { useCartDrawer } from '../../context/cartDrawerContext';
+import { useAuth } from '../../context/authContext';
+import Spinner from '../common/Spinner';
 
 const Layout = ({ children }) => {
-  const { state } = useStore();
+  const { isOpen, setIsOpen } = useCartDrawer();
+  const { loading } = useAuth();
+
+  // Wait for auth to load before rendering
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Spinner size="lg" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-cream-50">
-      {/* Header */}
       <Header />
 
-      {/* Main Content */}
       <main className="flex-1 bg-cream-50">
         {children}
       </main>
 
-      {/* Cart Drawer */}
-      <CartDrawer />
+      <CartDrawer 
+        isOpen={isOpen} 
+        onClose={() => setIsOpen(false)} 
+      />
 
-      {/* Footer */}
       <Footer />
     </div>
   );
