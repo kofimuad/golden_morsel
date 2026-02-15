@@ -3,16 +3,23 @@ import axios from 'axios';
 /**
  * Send WhatsApp message using Meta API
  */
-export const sendWhatsAppMessage = async (recipientPhone, message) => {
+export const sendWhatsAppMessage = async (recipientPhone, message, retries = 3) => {
   try {
+    // Validate message length (WhatsApp limit is 4096 characters)
+    if (message.length > 4096) {
+      throw new Error(`Message exceeds WhatsApp limit of 4096 characters (${message.length})`);
+    }
+
     // Clean phone number - remove +, spaces, dashes
     let cleanPhone = recipientPhone.toString().trim();
     cleanPhone = cleanPhone.replace(/[+\s\-\(\)]/g, '');
     
     // Ensure it's a valid format (should be country code + number)
     if (cleanPhone.length < 10) {
-      throw new Error(`Invalid phone number format: ${recipientPhone}`);
+      throw new Error(`Invalid phone number format: ${recipientPhone} (cleaned: ${cleanPhone})`);
     }
+
+    console.log(`📱 Sending WhatsApp to: ${cleanPhone}`);
 
     const response = await axios.post(
       `https://graph.instagram.com/v21.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`,
@@ -27,14 +34,32 @@ export const sendWhatsAppMessage = async (recipientPhone, message) => {
         headers: {
           'Authorization': `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
           'Content-Type': 'application/json'
-        }
+        },
+        timeout: 10000
       }
     );
 
-    console.log('✓ WhatsApp message sent:', response.data.messages[0].id);
-    return response.data;
+    if (response.data && response.data.messages && response.data.messages[0]) {
+      console.log('✅ WhatsApp message sent:', response.data.messages[0].id);
+      return response.data;
+    } else {
+      throw new Error('Unexpected response format from WhatsApp API');
+    }
   } catch (error) {
-    console.error('❌ WhatsApp error:', error.response?.data || error.message);
+    console.error('❌ WhatsApp error:', {
+      message: error.message,
+      apiError: error.response?.data,
+      status: error.response?.status,
+      phone: recipientPhone
+    });
+
+    // Retry logic for transient failures
+    if (retries > 0 && error.response?.status >= 500) {
+      console.log(`🔄 Retrying... (${retries} attempts remaining)`);
+      await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second
+      return sendWhatsAppMessage(recipientPhone, message, retries - 1);
+    }
+
     throw error;
   }
 };
@@ -79,6 +104,7 @@ export const sendOrderConfirmation = async (order) => {
     console.log(`✓ Order confirmation sent to ${order.guestInfo.phone}`);
   } catch (error) {
     console.error(`❌ Failed to send confirmation for order ${order.orderId}:`, error.message);
+    throw error;
   }
 };
 
@@ -87,7 +113,7 @@ export const sendOrderConfirmation = async (order) => {
  */
 export const sendPaymentConfirmation = async (order) => {
   const message = `
-✅ Payment Confirmed!
+✅ *Payment Confirmed!*
 
 Order #${order.orderId}
 Total: GH₵ ${order.total.toFixed(2)}
@@ -100,8 +126,10 @@ Thank you! 🙏
 
   try {
     await sendWhatsAppMessage(order.guestInfo.phone, message);
+    console.log(`✓ Payment confirmation sent to ${order.guestInfo.phone}`);
   } catch (error) {
     console.error(`❌ Failed to send payment confirmation:`, error.message);
+    throw error;
   }
 };
 

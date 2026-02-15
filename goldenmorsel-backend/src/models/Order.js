@@ -10,20 +10,27 @@ const orderSchema = new mongoose.Schema(
     
     // Customer information
     guestInfo: {
-      name: {
-        type: String,
-        required: true
+  name: { type: String, required: true },
+  phone: {
+    type: String,
+    required: true,
+    // Validate phone format
+    validate: {
+      validator: function(v) {
+        return /^\+?[0-9]{10,15}$/.test(v);
       },
-      phone: {
-        type: String,
-        required: true
-      },
-      email: String,
-      address: String,
-      city: String,
-      region: String,
-      _id: false
-    },
+      message: 'Invalid phone number format'
+    }
+  },
+  email: String,
+  address: {
+    type: String,
+    required: true  // Make required
+  },
+  city: String,
+  region: String,
+  _id: false
+},
     
     // Optional: if customer has account
     userId: {

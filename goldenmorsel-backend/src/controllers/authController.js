@@ -2,6 +2,7 @@ import bcryptjs from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import Admin from '../models/Admin.js';
 import User from '../models/User.js';
+import { asyncHandler, AppError } from '../middleware/errorHandler.js';
 
 // ========== ADMIN CONTROLLERS ==========
 
@@ -12,20 +13,13 @@ export const adminSignup = async (req, res) => {
 
     // Validate input
     if (!email || !password || !name) {
-      return res.status(400).json({
-        success: false,
-        message: 'Email, password, and name are required'
-      });
-    }
+    throw new AppError('Email, password, and name are required', 400);
+  }
 
-    // Check if admin already exists
-    const existingAdmin = await Admin.findOne({ email });
-    if (existingAdmin) {
-      return res.status(400).json({
-        success: false,
-        message: 'Admin with this email already exists'
-      });
-    }
+  const existingAdmin = await Admin.findOne({ email });
+  if (existingAdmin) {
+    throw new AppError('Admin with this email already exists', 400);
+  }
 
     // Hash password
     const salt = await bcryptjs.genSalt(10);

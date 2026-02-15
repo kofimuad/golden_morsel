@@ -3,7 +3,8 @@ import Product from '../models/Product.js';
 import InventoryLog from '../models/InventoryLog.js';
 import { asyncHandler, AppError } from '../middleware/errorHandler.js';
 import { updateInventoryOnPayment } from '../services/inventoryService.js';
-import { sendOrderConfirmation } from '../services/whatsappService.js';
+import { sendOrderConfirmation, sendPaymentConfirmation } from '../services/whatsappService.js';
+import { sendPaymentConfirmationEmail } from '../services/emailService.js';
 
 // CREATE guest order
 export const createOrder = asyncHandler(async (req, res) => {
@@ -18,6 +19,13 @@ export const createOrder = asyncHandler(async (req, res) => {
     throw new AppError('Customer name and phone required', 400);
   }
 
+  const requiredFields = ['name', 'phone', 'address'];
+  for (const field of requiredFields) {
+    if (!guestInfo[field]) {
+      throw new AppError(`Customer ${field} is required`, 400);
+    }
+  }
+  
   // Verify stock
   for (const item of items) {
     const product = await Product.findById(item.productId);
@@ -45,8 +53,13 @@ export const createOrder = asyncHandler(async (req, res) => {
     status: 'pending'
   });
 
-  // Send WhatsApp confirmation
-  await sendOrderConfirmation(order);
+  // Send WhatsApp confirmation (don't let this block the response)
+  try {
+    await sendOrderConfirmation(order);
+  } catch (error) {
+    console.error('❌ WhatsApp notification failed:', error.message);
+    // Continue anyway - order is already created and saved
+  }
 
   res.status(201).json({
     success: true,
@@ -109,6 +122,35 @@ export const updateOrderStatus = asyncHandler(async (req, res) => {
 
   if (!order) {
     throw new AppError('Order not found', 404);
+  }
+
+  // ===== HANDLE SIDE EFFECTS WHEN PAYMENT CONFIRMED =====
+  if (status === 'paid') {
+    // Update inventory
+    try {
+      await updateInventoryOnPayment(order, req.adminId);
+      console.log(`✓ Inventory updated for order ${order.orderId}`);
+    } catch (error) {
+      console.error('❌ Inventory update error:', error.message);
+    }
+
+    // Send WhatsApp notification
+    try {
+      await sendPaymentConfirmation(order);
+      console.log(`✓ WhatsApp notification sent for order ${order.orderId}`);
+    } catch (error) {
+      console.error('❌ WhatsApp notification error:', error.message);
+    }
+
+    // Send email notification
+    try {
+      if (order.guestInfo.email) {
+        await sendPaymentConfirmationEmail(order);
+        console.log(`✓ Email notification sent for order ${order.orderId}`);
+      }
+    } catch (error) {
+      console.error('❌ Email notification error:', error.message);
+    }
   }
 
   res.status(200).json({

@@ -2,11 +2,13 @@ import express from 'express';
 import {
   adminLogin,
   adminSignup,
-  getCurrentAdmin,
-  userSignup,
-  userLogin,
-  getCurrentUser
+  getCurrentAdmin
 } from '../controllers/authController.js';
+import {
+  signup as userSignup,
+  login as userLogin,
+  getCurrentUser
+} from '../controllers/userController.js';
 import {
   validateAdminLogin,
   validateUserSignup,     
@@ -18,25 +20,13 @@ import { authMiddleware } from '../middleware/authMiddleware.js';
 const router = express.Router();
 
 // ========== ADMIN ROUTES ==========
-
-// Admin Signup
 router.post('/admin-signup', adminSignup);
-
-// Admin Login - WITH VALIDATION
 router.post('/admin-login', validateAdminLogin, adminLogin);
-
-// Get current admin - PROTECTED
 router.get('/admin-me', adminAuthMiddleware, getCurrentAdmin);
 
 // ========== USER ROUTES ==========
-
-// User Signup - WITH VALIDATION
-router.post('/user-signup', validateUserSignup, userSignup);
-
-// User Login - WITH VALIDATION
-router.post('/user-login', validateUserLogin, userLogin);
-
-// Get current user - PROTECTED
-router.get('/user-me', authMiddleware, getCurrentUser);
+router.post('/signup', validateUserSignup, userSignup);
+router.post('/login', validateUserLogin, userLogin);
+router.get('/me', authMiddleware, getCurrentUser);
 
 export default router;

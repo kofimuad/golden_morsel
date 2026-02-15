@@ -1,6 +1,6 @@
 import express from 'express';
 import {
-  verifyWhatsAppWebhook,    // NEW: Separate verification function
+  verifyWhatsAppWebhook,
   whatsappWebhook,
   sendOrderMessage,
   sendCheckout
@@ -9,23 +9,19 @@ import { adminAuthMiddleware } from '../middleware/adminMiddleware.js';
 
 const router = express.Router();
 
-// ========== META WEBHOOK VERIFICATION ==========
-// GET request - Meta verifies our webhook endpoint
-// No authentication needed for this endpoint
+// ========== META WEBHOOK VERIFICATION & PROCESSING ==========
+// GET - Meta verifies webhook on setup
 router.get('/webhook', verifyWhatsAppWebhook);
 
-// ========== INCOMING MESSAGE PROCESSING ==========
-// POST request - Meta sends incoming messages here
-// No authentication needed (Meta sends from their servers)
+// POST - Meta sends incoming messages here
 router.post('/webhook', whatsappWebhook);
 
-// ========== SEND MESSAGE TO CUSTOMER ==========
-// Admin sends message to customer
-// Requires admin authentication
-router.post('/:orderId/send', adminAuthMiddleware, sendOrderMessage);
-
 // ========== SEND CHECKOUT MESSAGE ==========
-// Frontend sends checkout order data to WhatsApp
-router.post('/checkout', sendCheckout);
+// Frontend sends checkout order data
+router.post('/send-checkout', sendCheckout);
+
+// ========== SEND ORDER MESSAGE ==========
+// Admin sends message to customer about their order
+router.post('/orders/:orderId/send', adminAuthMiddleware, sendOrderMessage);
 
 export default router;

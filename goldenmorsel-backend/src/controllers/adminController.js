@@ -84,7 +84,26 @@ export const confirmPayment = asyncHandler(async (req, res) => {
   await order.save();
 
   // Update inventory
-  await updateInventoryOnPayment(order);
+  try {
+    await updateInventoryOnPayment(order, req.adminId);
+  } catch (error) {
+    console.error('Inventory update error:', error.message);
+    // Don't throw - order is already paid
+  }
+
+  // Send WhatsApp notification to customer
+  try {
+    await sendPaymentConfirmation(order);
+  } catch (error) {
+    console.error('WhatsApp notification error:', error.message);
+  }
+
+  // Send email notification
+  try {
+    await sendPaymentConfirmationEmail(order);
+  } catch (error) {
+    console.error('Email notification error:', error.message);
+  }
 
   res.status(200).json({
     success: true,

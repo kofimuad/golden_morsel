@@ -7,8 +7,13 @@ import { sendWhatsAppMessage, generateOrderMessage, generateCheckoutMessage } fr
 export const verifyWhatsAppWebhook = (req, res) => {
   const token = req.query['hub.verify_token'];
   const challenge = req.query['hub.challenge'];
+  const mode = req.query['hub.mode'];  // ADD THIS
 
-  // Check for required parameters
+  console.log('🔍 Webhook verification attempt:');
+  console.log('   Mode:', mode);
+  console.log('   Token received:', token);
+  console.log('   Token expected:', process.env.WHATSAPP_VERIFY_TOKEN);
+
   if (!token || !challenge) {
     console.error('❌ Missing webhook verification parameters');
     return res.status(400).json({
@@ -16,16 +21,16 @@ export const verifyWhatsAppWebhook = (req, res) => {
     });
   }
 
-  // Verify token matches environment variable
   if (token !== process.env.WHATSAPP_VERIFY_TOKEN) {
     console.error('❌ Invalid WhatsApp verification token');
+    console.error('   Expected:', process.env.WHATSAPP_VERIFY_TOKEN);
+    console.error('   Received:', token);
     return res.status(403).json({
       error: 'Invalid verification token'
     });
   }
 
-  // Success - return challenge to Meta
-  console.log('✓ WhatsApp webhook verified successfully');
+  console.log('✅ WhatsApp webhook verified successfully');
   res.status(200).send(challenge);
 };
 
