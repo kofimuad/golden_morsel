@@ -1,7 +1,7 @@
 {
   "services": {
     "goldenmorsel-backend": {
-      "builder": "nixpacks"
+      "root": "goldenmorsel-backend"
     }
   }
 }
