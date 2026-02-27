@@ -20,7 +20,7 @@ import { authMiddleware } from '../middleware/authMiddleware.js';
 const router = express.Router();
 
 // ========== ADMIN ROUTES ==========
-router.post('/admin-signup', adminSignup);
+router.post('/admin-signup', adminAuthMiddleware, adminSignup);
 router.post('/admin-login', validateAdminLogin, adminLogin);
 router.get('/admin-me', adminAuthMiddleware, getCurrentAdmin);
 

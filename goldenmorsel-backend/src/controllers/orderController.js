@@ -1,3 +1,4 @@
+import mongoose from 'mongoose'
 import Order from '../models/Order.js';
 import Product from '../models/Product.js';
 import InventoryLog from '../models/InventoryLog.js';
@@ -10,7 +11,6 @@ import { sendPaymentConfirmationEmail } from '../services/emailService.js';
 export const createOrder = asyncHandler(async (req, res) => {
   const { guestInfo, items } = req.body;
 
-  // Validate
   if (!guestInfo || !items || items.length === 0) {
     throw new AppError('Invalid order data', 400);
   }
@@ -25,7 +25,7 @@ export const createOrder = asyncHandler(async (req, res) => {
       throw new AppError(`Customer ${field} is required`, 400);
     }
   }
-  
+
   // Verify stock
   for (const item of items) {
     const product = await Product.findById(item.productId);
@@ -53,12 +53,11 @@ export const createOrder = asyncHandler(async (req, res) => {
     status: 'pending'
   });
 
-  // Send WhatsApp confirmation (don't let this block the response)
+  // Send WhatsApp confirmation
   try {
     await sendOrderConfirmation(order);
   } catch (error) {
     console.error('❌ WhatsApp notification failed:', error.message);
-    // Continue anyway - order is already created and saved
   }
 
   res.status(201).json({
@@ -66,26 +65,27 @@ export const createOrder = asyncHandler(async (req, res) => {
     message: 'Order created successfully',
     data: {
       orderId: order.orderId,
-      total: order.total,
-      status: order.status
+      total:   order.total,
+      status:  order.status
     }
   });
 });
 
-// GET order by ID
+// GET order by ID (handles both MongoDB _id and orderId field)
 export const getOrderById = asyncHandler(async (req, res) => {
-  const order = await Order.findOne({ orderId: req.params.orderId })
-    .populate('items.productId', 'title price');
+  const { orderId } = req.params
 
-  if (!order) {
-    throw new AppError('Order not found', 404);
-  }
+  const order = await Order.findOne({
+    $or: [
+      { orderId },
+      { _id: mongoose.Types.ObjectId.isValid(orderId) ? orderId : null }
+    ]
+  })
 
-  res.status(200).json({
-    success: true,
-    data: order
-  });
-});
+  if (!order) throw new AppError('Order not found', 404)
+
+  res.status(200).json({ success: true, data: order })
+})
 
 // GET orders by phone (track)
 export const trackOrderByPhone = asyncHandler(async (req, res) => {
@@ -101,7 +101,7 @@ export const trackOrderByPhone = asyncHandler(async (req, res) => {
   });
 });
 
-// UPDATE order status (Admin)
+// UPDATE order status (Admin) — handles both MongoDB _id and orderId field
 export const updateOrderStatus = asyncHandler(async (req, res) => {
   const { status, notes } = req.body;
 
@@ -111,7 +111,12 @@ export const updateOrderStatus = asyncHandler(async (req, res) => {
   }
 
   const order = await Order.findOneAndUpdate(
-    { orderId: req.params.orderId },
+    {
+      $or: [
+        { orderId: req.params.orderId },
+        { _id: mongoose.Types.ObjectId.isValid(req.params.orderId) ? req.params.orderId : null }
+      ]
+    },
     {
       status,
       internalNotes: notes,
@@ -124,9 +129,8 @@ export const updateOrderStatus = asyncHandler(async (req, res) => {
     throw new AppError('Order not found', 404);
   }
 
-  // ===== HANDLE SIDE EFFECTS WHEN PAYMENT CONFIRMED =====
+  // ── Side effects when payment confirmed ──────────────────────
   if (status === 'paid') {
-    // Update inventory
     try {
       await updateInventoryOnPayment(order, req.adminId);
       console.log(`✓ Inventory updated for order ${order.orderId}`);
@@ -134,7 +138,6 @@ export const updateOrderStatus = asyncHandler(async (req, res) => {
       console.error('❌ Inventory update error:', error.message);
     }
 
-    // Send WhatsApp notification
     try {
       await sendPaymentConfirmation(order);
       console.log(`✓ WhatsApp notification sent for order ${order.orderId}`);
@@ -142,7 +145,6 @@ export const updateOrderStatus = asyncHandler(async (req, res) => {
       console.error('❌ WhatsApp notification error:', error.message);
     }
 
-    // Send email notification
     try {
       if (order.guestInfo.email) {
         await sendPaymentConfirmationEmail(order);
@@ -159,3 +161,17 @@ export const updateOrderStatus = asyncHandler(async (req, res) => {
     data: order
   });
 });
+
+// GET order by orderId reference (e.g. ORD-202602-0005)
+export const getOrderByReference = asyncHandler(async (req, res) => {
+  const order = await Order.findOne({ orderId: req.params.orderId })
+
+  if (!order) {
+    throw new AppError('Order not found', 404)
+  }
+
+  res.status(200).json({
+    success: true,
+    data: order
+  })
+})

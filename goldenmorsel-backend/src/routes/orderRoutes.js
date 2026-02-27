@@ -2,29 +2,22 @@ import express from 'express';
 import {
   createOrder,
   getOrderById,
+  getOrderByReference,
   trackOrderByPhone,
-  updateOrderStatus
+  updateOrderStatus,
 } from '../controllers/orderController.js';
-import { validateCreateOrder } from '../middleware/validation.js';  // ADDED
+import { validateCreateOrder } from '../middleware/validation.js';
 import { adminAuthMiddleware } from '../middleware/adminMiddleware.js';
 
 const router = express.Router();
 
-// ========== GUEST ROUTES (No authentication required) ==========
-
-// Create order - WITH VALIDATION
-// Validates: name, phone, email, address, items, prices
+// ── Specific routes FIRST (before any :param routes) ──────────
 router.post('/create', validateCreateOrder, createOrder);
+router.get('/ref/:orderId',    getOrderByReference);   // ← must be before /:orderId
+router.get('/track/:phone',    trackOrderByPhone);     // ← must be before /:orderId
 
-// Get order by ID
-router.get('/:orderId', getOrderById);
-
-// Track orders by phone
-router.get('/track/:phone', trackOrderByPhone);
-
-// ========== ADMIN ROUTES (Authentication required) ==========
-
-// Update order status
+// ── Generic param routes LAST ──────────────────────────────────
+router.get('/:orderId',        getOrderById);
 router.put('/:orderId/status', adminAuthMiddleware, updateOrderStatus);
 
 export default router;

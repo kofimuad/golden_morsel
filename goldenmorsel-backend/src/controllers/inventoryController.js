@@ -5,8 +5,8 @@ import { asyncHandler, AppError } from '../middleware/errorHandler.js';
 // GET stock levels
 export const getStockLevels = asyncHandler(async (req, res) => {
   const products = await Product.find({ active: true })
-    .select('title stock lowStockThreshold isLowStock')
-    .sort({ stock: 1 });
+  .select('title stock lowStockThreshold isLowStock price image category')
+  .sort({ stock: 1 });
 
   const lowStockItems = products.filter(p => p.stock <= p.lowStockThreshold);
 

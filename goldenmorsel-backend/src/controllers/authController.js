@@ -9,67 +9,73 @@ import { asyncHandler, AppError } from '../middleware/errorHandler.js';
 // Admin Signup
 export const adminSignup = async (req, res) => {
   try {
-    const { email, password, name, phone } = req.body;
+    // ── Must be authenticated superadmin ─────────────────────
+    if (!req.admin || req.admin.role !== 'superadmin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Only a superadmin can create new admin accounts',
+      })
+    }
 
-    // Validate input
+    const { email, password, name, phone, role = 'admin' } = req.body
+
     if (!email || !password || !name) {
-    throw new AppError('Email, password, and name are required', 400);
-  }
+      return res.status(400).json({
+        success: false,
+        message: 'Email, password, and name are required',
+      })
+    }
 
-  const existingAdmin = await Admin.findOne({ email });
-  if (existingAdmin) {
-    throw new AppError('Admin with this email already exists', 400);
-  }
+    // Prevent creating another superadmin unless you want to allow it
+    if (role === 'superadmin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Cannot create another superadmin account',
+      })
+    }
 
-    // Hash password
-    const salt = await bcryptjs.genSalt(10);
-    const hashedPassword = await bcryptjs.hash(password, salt);
+    const existing = await Admin.findOne({ email })
+    if (existing) {
+      return res.status(400).json({
+        success: false,
+        message: 'Admin with this email already exists',
+      })
+    }
 
-    // Create admin
+    const salt     = await bcryptjs.genSalt(10)
+    const hashed   = await bcryptjs.hash(password, salt)
+
     const admin = await Admin.create({
       email,
-      password: hashedPassword,
+      password: hashed,
       name,
       phone,
-      role: 'admin',
+      role:        'admin',
       permissions: [
         'view_orders',
         'confirm_payment',
         'manage_inventory',
         'manage_products',
-        'manage_admins',
-        'view_analytics'
+        'view_analytics',
+        // Note: manage_admins NOT given to regular admins
       ],
-      active: true
-    });
-
-    // Generate token
-    const token = jwt.sign(
-      { id: admin._id, email: admin.email, role: admin.role },
-      process.env.JWT_ADMIN_SECRET || 'admin_secret_key',
-      { expiresIn: '7d' }
-    );
+      active: true,
+    })
 
     res.status(201).json({
       success: true,
       message: 'Admin account created successfully',
       data: {
-        admin: {
-          _id: admin._id,
-          email: admin.email,
-          name: admin.name,
-          role: admin.role
-        },
-        token
-      }
-    });
+        _id:   admin._id,
+        email: admin.email,
+        name:  admin.name,
+        role:  admin.role,
+      },
+    })
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message
-    });
+    res.status(500).json({ success: false, message: error.message })
   }
-};
+}
 
 // Admin Login
 export const adminLogin = async (req, res) => {

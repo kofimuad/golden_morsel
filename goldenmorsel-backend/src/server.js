@@ -20,55 +20,59 @@ import inventoryRoutes from './routes/inventoryRoutes.js';
 import authRoutes from './routes/authRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import whatsappRoutes from './routes/whatsappRoutes.js';
+import uploadRoutes from './routes/uploadRoutes.js';
 
 // Import middleware
 import { errorHandler } from './middleware/errorHandler.js';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+const isDev = process.env.NODE_ENV !== 'production';
 
 // ========== RATE LIMITING CONFIGURATION ==========
 
 // General rate limiter for all routes
 const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 100,
+  max: isDev ? 1000 : 100,
   message: 'Too many requests from this IP, please try again later.',
   standardHeaders: true,
   legacyHeaders: false,
-  skip: (req) => {
-    return req.path === '/api/health';
-  }
+  skip: (req) => req.path === '/api/health',
 });
 
 // Strict rate limiter for authentication endpoints
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 5,
+  max: isDev ? 100 : 5,
   message: 'Too many login attempts, please try again later.',
-  skipSuccessfulRequests: true
+  skipSuccessfulRequests: true,
 });
 
-// Strict rate limiter for order creation
+// Rate limiter for order creation
 const orderLimiter = rateLimit({
   windowMs: 60 * 60 * 1000,
-  max: 20,
-  message: 'Too many orders, please try again later.'
+  max: isDev ? 500 : 20,
+  message: 'Too many orders, please try again later.',
 });
 
 // ========== MIDDLEWARE ==========
 
 app.use(helmet({
   contentSecurityPolicy: false,
-  crossOriginResourcePolicy: { allowCrossOrigin: true }
+  crossOriginResourcePolicy: { allowCrossOrigin: true },
 }));
 
 app.use(morgan('combined'));
 
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  origin: (origin, callback) => {
+    const allowed = (process.env.FRONTEND_URL || 'http://localhost:3000').split(',');
+    if (!origin || allowed.includes(origin)) return callback(null, true);
+    callback(new Error('Not allowed by CORS'));
+  },
   credentials: true,
-  optionsSuccessStatus: 200
+  optionsSuccessStatus: 200,
 }));
 
 app.use(express.json({ limit: '50mb' }));
@@ -80,10 +84,8 @@ app.use(generalLimiter);
 
 const connectDB = async () => {
   try {
-    const mongoURI = process.env.MONGODB_URI || 'mongodb://localhost:27017/goldenmorse';
-    
+    const mongoURI = process.env.MONGODB_URI || 'mongodb://localhost:27017/goldenmorsel';
     await mongoose.connect(mongoURI);
-    
     console.log('✓ MongoDB connected successfully');
   } catch (error) {
     console.error('❌ MongoDB connection error:', error.message);
@@ -95,23 +97,23 @@ connectDB();
 
 // ========== ROUTES ==========
 
-app.use('/api/products', productRoutes);
-app.use('/api/users', userRoutes);
-app.use('/api/whatsapp', whatsappRoutes);
+app.use('/api/products',   productRoutes);
+app.use('/api/users',      userRoutes);
+app.use('/api/whatsapp',   whatsappRoutes);
+app.use('/api/auth',       authLimiter,  authRoutes);
+app.use('/api/orders',     orderLimiter, orderRoutes);
+app.use('/api/inventory',  inventoryRoutes);
+app.use('/api/admin',      adminRoutes);
+app.use('/api/upload',     uploadRoutes);
 
-app.use('/api/auth', authLimiter, authRoutes);
-app.use('/api/orders', orderLimiter, orderRoutes);
-app.use('/api/inventory', inventoryRoutes);
-app.use('/api/admin', adminRoutes);
-
-// ========== HEALTH CHECK ENDPOINT ==========
+// ========== HEALTH CHECK ==========
 
 app.get('/api/health', (req, res) => {
   res.status(200).json({
     status: 'ok',
     timestamp: new Date().toISOString(),
-    message: 'GoldenMorse API is running',
-    environment: process.env.NODE_ENV || 'development'
+    message: 'GoldenMorsel API is running',
+    environment: process.env.NODE_ENV || 'development',
   });
 });
 
@@ -122,7 +124,7 @@ app.use((req, res) => {
     success: false,
     message: 'Route not found',
     path: req.path,
-    method: req.method
+    method: req.method,
   });
 });
 
@@ -134,11 +136,11 @@ app.use(errorHandler);
 
 const startServer = async () => {
   app.listen(PORT, () => {
-    console.log('\n🚀 GoldenMorse Backend Server');
+    console.log('\n🚀 GoldenMorsel Backend Server');
     console.log('================================');
     console.log(`🔗 Server running on http://localhost:${PORT}`);
     console.log(`📁 Environment: ${process.env.NODE_ENV || 'development'}`);
-    console.log(`🛡️  Rate limiting enabled`);
+    console.log(`🛡️  Rate limiting: ${isDev ? 'relaxed (dev)' : 'strict (production)'}`);
     console.log('================================\n');
   });
 };
