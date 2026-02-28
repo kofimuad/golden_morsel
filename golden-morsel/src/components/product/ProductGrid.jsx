@@ -1,7 +1,11 @@
 import ProductCard from './ProductCard'
 import { Skeleton } from '../ui/Skeleton'
 
-export default function ProductGrid({ products = [], loading = false, emptyMessage = 'No products found.' }) {
+export default function ProductGrid({
+  products = [],
+  loading = false,
+  emptyMessage = 'No products found.',
+}) {
 
   // ── Loading state — skeleton cards ──────────────────────────
   if (loading) {
@@ -29,17 +33,11 @@ export default function ProductGrid({ products = [], loading = false, emptyMessa
     )
   }
 
-  // ── Staggered grid ───────────────────────────────────────────
+  // ── Grid ─────────────────────────────────────────────────────
   return (
     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-      {products.map((product, i) => (
-        <div
-          key={product._id}
-          // Stagger every other card down on mobile (Stitch aesthetic)
-          className={i % 2 !== 0 ? 'mt-6 md:mt-0' : ''}
-        >
-          <ProductCard product={product} />
-        </div>
+      {products.map((product) => (
+        <ProductCard key={product._id} product={product} />
       ))}
     </div>
   )

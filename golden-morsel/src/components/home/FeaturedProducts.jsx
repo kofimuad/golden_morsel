@@ -24,7 +24,7 @@ export default function FeaturedProducts({ products = [], loading = false }) {
         </Link>
       </div>
 
-      <ProductGrid products={products} loading={loading} />
+      <ProductGrid products={products} loading={loading} stagger={false} />
 
       {/* Mobile view all */}
       <div className="mt-8 text-center sm:hidden">

@@ -9,7 +9,7 @@ export default function ProductCard({ product }) {
   const { addItem } = useCart()
 
   const handleAddToCart = (e) => {
-    e.preventDefault() // prevent Link navigation
+    e.preventDefault()
     e.stopPropagation()
     addItem(product)
     showToast.success(`${product.title} added to cart`)
@@ -78,27 +78,18 @@ export default function ProductCard({ product }) {
 
       {/* ── Info ────────────────────────────────────────────────── */}
       <div className="flex flex-col gap-1 px-0.5">
-        {/* Category label */}
         <p className="text-[9px] uppercase tracking-widest text-gray-400 dark:text-gray-500 font-sans">
           {product.category}
         </p>
-
-        {/* Title */}
         <h3 className="font-serif text-base text-gray-900 dark:text-white leading-snug group-hover:text-primary transition-colors line-clamp-2">
           {product.title}
         </h3>
-
-        {/* Rating */}
         {product.rating > 0 && (
           <StarRating value={product.rating} size="sm" showValue />
         )}
-
-        {/* Price */}
         <p className="text-sm font-medium text-primary mt-0.5">
           {formatPrice(product.price)}
         </p>
-
-        {/* Variants hint */}
         {product.variants?.length > 0 && (
           <p className="text-[10px] text-gray-400 font-sans">
             {product.variants.length} option{product.variants.length > 1 ? 's' : ''} available
