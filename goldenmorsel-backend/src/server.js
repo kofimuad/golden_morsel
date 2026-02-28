@@ -67,13 +67,13 @@ app.use(morgan('combined'));
 
 app.use(cors({
   origin: (origin, callback) => {
-    const allowed = (process.env.FRONTEND_URL || 'http://localhost:3000', 'https://golden-morsel.netlify.app/').split(',');
-    if (!origin || allowed.includes(origin)) return callback(null, true);
-    callback(new Error('Not allowed by CORS'));
+    const allowed = (process.env.FRONTEND_URL || 'http://localhost:3000,https://golden-morsel.netlify.app').split(',')
+    if (!origin || allowed.includes(origin)) return callback(null, true)
+    callback(new Error('Not allowed by CORS'))
   },
   credentials: true,
   optionsSuccessStatus: 200,
-}));
+}))
 
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
