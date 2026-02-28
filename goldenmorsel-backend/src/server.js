@@ -67,8 +67,19 @@ app.use(morgan('combined'));
 
 app.use(cors({
   origin: (origin, callback) => {
-    const allowed = (process.env.FRONTEND_URL || 'http://localhost:3000,https://golden-morsel.netlify.app').split(',')
-    if (!origin || allowed.includes(origin)) return callback(null, true)
+    // Allow no origin (mobile apps, curl, etc.)
+    if (!origin) return callback(null, true)
+    
+    // Strip trailing slash before checking
+    const cleanOrigin = origin.replace(/\/$/, '')
+    
+    const allowed = [
+      'http://localhost:3000',
+      'http://localhost:5173',
+      'https://golden-morsel.netlify.app',
+    ]
+    
+    if (allowed.includes(cleanOrigin)) return callback(null, true)
     callback(new Error('Not allowed by CORS'))
   },
   credentials: true,
